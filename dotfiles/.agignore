@@ -1,0 +1,75 @@
+
+# Compiled Object and Dependent files
+*.slo
+*.lo
+*.o
+*.ro
+*.d
+*.s
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# Executables
+*.exe
+*.out
+*.app
+*.bin
+
+# CVS
+/CVS/*
+*/CVS/*
+.cvsignore
+*/.cvsignore
+
+# SVN
+.svn/
+
+# Git
+.git/
+
+# Ignore tags created by etags, ctags and gtags
+TAGS
+!TAGS/
+tags
+!tags/
+GPATH
+GRTAGS
+GTAGS
+GSYMS
+
+# other
+!.gitignore
+*.log
+*~
+*.swp
+
+# local
+*.map
+*.gif
+*.png
+*.bmp
+*.jpg
+*.jpeg
+*.psd
+*.xml
+*.xls
+*.xlsx
+*.xlsm
+*.doc
+*.ppt
+*.tmp
+*.csv
+*.tar.gz
+*.tgz
+*.tar.bz2
+*.tbz
+*.xz
+

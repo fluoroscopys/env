@@ -1,0 +1,64 @@
+[core]
+	editor = code --wait
+	pager = less -x2
+	excludesfile = /root/.gitignore
+	filemode = true
+	attributesfile = /root/.gitattributes
+	preloadindex = true
+	fscache = true
+	autocrlf = false
+[user]
+	name = ykoike
+	#email = yohei.koike@jp.onkyo.com
+	email = koikey0201@gmail.com
+[color]
+	ui = auto
+	status = always
+	branch = auto
+	interactive = auto
+	showbranch = auto
+[color "diff"]
+	meta = green
+	new = yellow
+	old = cyan
+	func = white
+	frag = magenta
+	whitespace = red
+	commit = white
+[color "branch"]
+	current = red
+	local = yellow
+	remote = cyan
+[color "status"]
+	header = green
+	added = cyan
+	changed = yellow
+	untracked = white
+	branch = red
+[push]
+	default = tracking
+[alias]
+	co = checkout
+	st = status
+	br = branch -a
+	ci = commit
+[ghq]
+	root = ~/src
+[diff]
+    tool = WinMerge
+[difftool "WinMerge"]
+    path = C:/Program Files/WinMerge/WinMergeU.exe
+    cmd = \"C:/Program Files/WinMerge/WinMergeU.exe\" -f \"*.*\" -e -u -r \"$LOCAL\" \"$REMOTE\"
+[merge]
+    tool = WinMerge
+[mergetool "WinMerge"]
+    path = C:/Program Files/WinMerge/WinMergeU.exe
+    cmd = \"C:/Program Files/WinMerge/WinMergeU.exe\" -e -u \"$LOCAL\" \"$REMOTE\" \"$MERGED\"
+[alias]
+    windiff = difftool -y -d -t WinMerge
+    winmerge = mergetool -y -t WinMerge
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

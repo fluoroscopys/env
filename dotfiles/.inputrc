@@ -1,0 +1,4 @@
+set editing-mode emacs
+set completion-ignore-case off
+set bell-style none
+set expand-tilde off

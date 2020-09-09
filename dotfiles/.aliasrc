@@ -1,0 +1,481 @@
+################################
+##### Common Alias Setting #####
+################################
+function cdp {
+    builtin cd $1;
+    #pwd    
+}
+function findf {
+    find . -name *$1* 2> /dev/null
+}
+function mkpjt {
+    mkdir $1
+    cd $1 > /dev/null
+    mkdir tasks
+    mkdir wsapce
+    mkdir ref
+    cp ~/env/cmn/cmn/bplate/pjtname.md .
+    mv ./pjtname.md $1.md
+    sed -i s/pjtname/$1/g $1.md
+    code $1.md
+    cd .. > /dev/null
+}
+# ======================
+# uppjt
+# arg: None
+# ======================
+function uppjt {
+    if [ `pwd | grep "$HOME/pjt/"` ];then
+        python3 ~/env/cmn/cmn/dotfiles/schedule.py
+    fi
+}
+# ======================
+# mktask
+# arg: taskname
+# ======================
+function mktask {
+    if [ "$#" -ne 1 ]; then
+        echo "引数は１つです。"
+    else
+        echo -n "Section      :"
+        read Section
+        if [ "$Section" = "" ];then
+            Section=""
+        else
+            Section=_$Section
+        fi
+        echo -n "Start[YYMMDD]:"
+        read Start
+        if [ "$Start" = "" ];then
+            Start=_`date "+%y%m%d"`
+        else
+            digit=$((`echo $Start | \wc -c`-1))
+            if [ $digit = 6 ];then
+                Start=_$Start
+            else
+                echo Error: ${digit}桁です。YYMMDD形式で入力
+                return
+            fi
+        fi
+        echo -n "End[YYMMDD]  :"
+        read End
+        digit=0
+        if [ "$End" = "" ];then
+            End=`date -v+1d "+%y%m%d"`
+        else
+            digit=$((`echo $End | \wc -c`-1))
+            if [ $digit = 6 ];then
+                End=-$End@
+            else
+                echo Error: ${digit}桁です。YYMMDD形式で入力
+                return
+            fi
+        fi
+        dname=$1$Section$Start$End
+        mkdir $dname
+        # refフォルダをリンク
+        # src : ../ref
+        # dst : dnameフォルダ直下
+        srcpath=`cd .. ; pwd`
+        cd $dname > /dev/null
+        symlink $srcpath/ref ref
+        cd $srcpath/tasks/$dname > /dev/null
+        cp ~/env/cmn/cmn/bplate/taskname.md .
+        mv ./taskname.md $1.md
+        sed -i s/taskname/$1/g $1.md
+        code $1.md
+        # taskフォルダをリンク
+        # src : $dname
+        # dst : desktop
+        srcpath=`cd .. ; pwd`
+        cd ~/Desktop > /dev/null
+        symlink $srcpath/$dname $dname
+    fi
+}
+
+# $1: source path
+# $2: distination directory name
+function symlink {
+    if [ "$#" -ne 2 ]; then
+        echo "引数は2つです。"
+    else
+        path=`pwd`
+        cd ~/env/cmn/cmn/python_lib/smlink
+        python smlink.py $1 $2 $path
+        cd $path
+    fi
+}
+
+#function commit {
+#    # <運用ルール> http://bts2.kws.onkyo.com/gitlab2018/soft_all/dsp_cs498xx/snippets/4
+#    # 下記ワンライナーコメントは必須とし、それ以外のコメントを残したい場合は複数行コメントも可。
+#    # [テストモード影響度][Latency影響有無] commitの目的
+#    #
+#    # テストモード影響度 (A:影響あり | B:影響あり? | C:影響なし)
+#    # Latency影響有無 (A:影響あり | B:影響あり? | C:影響なし)
+#    if [ $# -ne 3 ]; then
+#        echo "指定された引数は$#個です。" 1>&2
+#        echo "実行するには3個の引数が必要です。" 1>&2
+#    elif [[ $1 =~ [^A-C] || $2 =~ [^A-C] ]]; then
+#        echo "引数１と２はA・B・Cのうち一文字を入力してください。"
+#        echo "引数１：テストモード影響度 (A:影響あり | B:影響あり? | C:影響なし)"
+#        echo "引数２：Latency影響有無 (A:影響あり | B:影響あり? | C:影響なし)"
+#    else
+#        branch_name=`git rev-parse --abbrev-ref HEAD`
+#        issue_num=`echo $branch_name | cut -d "_" -f1`
+#        gitcom='git commit -m '
+#        $gitcom"[$1][$2]#$issue_num $3"
+#    fi
+#}
+#function fstcmt {
+#    # masterを最新にしてブランチを作成し空コミットを行った後にMergeRequestを行う
+#    # 引数１：テストモード影響度 (A:影響あり | B:影響あり? | C:影響なし)
+#    # -> 空コミットのため"C"としておく。
+#    # 引数２：Latency影響有無 (A:影響あり | B:影響あり? | C:影響なし)
+#    # -> 空コミットのため"C"としておく。
+#    # 引数１：コミット時のコメント
+#    # 引数２：ブランチ名（issuenum_branchname)
+#    if [ $# -ne 2 ]; then
+#        echo "指定された引数は$#個です。" 1>&2
+#        echo "実行するには4個の引数が必要です。" 1>&2
+#    # elif [[ $1 =~ [^A-C] || $2 =~ [^A-C] ]]; then
+#    #     echo "引数１と２はA・B・Cのうち一文字を入力してください。"
+#    #     echo "引数１：テストモード影響度 (A:影響あり | B:影響あり? | C:影響なし)"
+#    #     echo "引数２：Latency影響有無 (A:影響あり | B:影響あり? | C:影響なし)"
+#    else
+#        ## pull
+#        #git checkout master
+#        #git checkout .
+#        #git pull origin master
+#        ## branch作成
+#        #git checkout -b $2
+#        ## commit
+#        #branch_name=`git rev-parse --abbrev-ref HEAD`
+#        #issue_num=`echo $2 | cut -d "_" -f1`
+#        #gitcom='git commit --allow-empty -m '
+#        #$gitcom"WIP: [C][C]#$issue_num $1"
+#        ## push
+#        #git push origin $2
+#        ## merge request
+#        #repo_name=`git rev-parse --show-toplevel`
+#        #echo $repo_name
+#        #start 
+#    fi
+#}
+
+function exls {
+    python ~/env/cmn/cmn/exls/exls.py
+    CUR_PATH=`\ls -A1 ~/env/cmn/cmn/exls/ | grep "^\.\^"`
+    CUR_PATH2=${CUR_PATH//^/"/"}
+    CUR_PATH3=${CUR_PATH2#.}
+    echo $CUR_PATH3
+    cd $CUR_PATH3
+    rm -f ~/env/cmn/cmn/exls/$CUR_PATH
+}
+case "${OSTYPE}" in
+    darwin*)
+        alias python='python3'
+    ;;
+esac
+alias cd='cdp'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
+alias cdghq='cd $(ghq list -p | peco)'
+alias ls=exls
+case "${OSTYPE}" in
+    darwin*)
+        #alias ls='ls -FG'
+        alias la='ls -aFG'
+        alias ll='ls -lFG --time-style=long-iso'
+        alias lla='ls -alFG --time-style=long-iso'
+        #alias ls='ls -F --color=none'
+        #alias la='ls -aF --color=none'
+        #alias ll='ls -lF --time-style=long-iso --color=none'
+        #alias lla='ls -alF --time-style=long-iso --color=none'
+        alias lsmd='lsG *.md'
+        export LSCOLORS=gxfxcxdxbxegexabagacad
+    ;;
+    Linux*)
+        #alias ls='ls -F --color=always'
+        alias la='ls -aF --color=always'
+        alias ll='ls -lF --time-style=long-iso --color=always'
+        alias lla='ls -alF --time-style=long-iso --color=always'
+        #alias ls='ls -F --color=none'
+        #alias la='ls -aF --color=none'
+        #alias ll='ls -lF --time-style=long-iso --color=none'
+        #alias lla='ls -alF --time-style=long-iso --color=none'
+        alias lsmd='ls --color=always *.md'
+        alias l1='ls -1'
+    ;;
+esac
+alias de='cd ~/Desktop'
+alias s='source ${HOME}/.bashrc'
+alias p='pwd'
+ag_defopt="ag --hidden --skip-vcs-ignores -p ${HOME}/.agignore"
+alias ag='${ag_defopt}'
+pt_defopt="pt -e --noglobal-gitignore --vcs-ignore=${HOME}/.agignore"
+alias pt='${pt_defopt}'
+alias zg='zgrep'
+alias d='date'
+alias sudo='sudo '
+alias yum='sudo yum'
+alias apt-get='sudo apt-get'
+alias tree='LC_CTYPE=C tree'
+alias h='history'  # e.g.) h 10 -> lists only the last 10 lines
+function t {
+    tree -a $1 | less
+}
+function tp {
+    tree -apsC $1 | less
+    # tree -aps $1 | less
+}
+function td {
+    tree -d $1 | less
+}
+alias cp='cp -a'
+alias rm='rm -f'
+alias as='alias'
+alias pc='patch'
+alias pcd='patch --dry-run'
+#alias diff='diff -ru --strip-trailing-cr'
+alias diff='colordiff -ru --strip-trailing-cr'
+alias mkdir='mkdir -p'
+alias df='df -h'
+alias j='jobs -l'
+alias cls='clear'
+alias clean='rm -f *~ .*~'
+alias pu='pushd'
+alias po='popd'
+#alias fn='find . -name 2> /dev/null'
+alias fn='findf'
+alias vi='vim'
+alias em='emacs -nw'
+#alias em='emacs'
+alias sc='screen -xRR'
+alias scls='screen -list'
+alias tm='tmux new -s'
+alias tma='tmux a -t'
+alias tml='tmux ls'
+alias perld='perl -de 0'
+alias wc='wc -l'
+alias hexdump='hexdump -Cv'
+alias xxd='xxd -g 1'
+alias nkfck='nkf --guess'   # check format
+alias nkflf='nkf -Lu'       # nkflf orgfile > newfile
+alias nkfutf8='nkf -w'      # nkfutf8 orgfile > newfile
+alias nkfeuc='nkf -e'       # nkfeuc orgfile > newfile
+alias nkfsj='nkf -s'        # nkfsj orgfile > newfile
+alias unpath='export PATH=${LOCAL_PATH}:${SYS_PATH}'
+#alias setgr='export GREP_OPTIONS="-n -I -E -P --color=always"'
+alias setgr='export GREP_OPTIONS="-n -I -P --color=always"'
+alias unsgr='unset GREP_OPTIONS'
+alias mktag='gtags -iv'
+alias nt='netstat -plutan'
+alias vncs='vncserver :2 -geometry 1024x768 -depth 24'
+alias vnce='killall Xvnc4'
+
+## git
+alias ghelp='git help'
+alias gclo='git clone'
+alias gpul='git pull -v'            # git fet origin -> git merge  origin/[branch]
+alias gpulr='git pull -v --rebase'  # git fet origin -> git rebase origin/[branch]
+#alias gpus='git push origin master'
+#alias gpus='git push origin develop'
+alias gco='git checkout'
+alias gcob='git checkout -b'
+alias gad='git add'
+alias gadu='git add -u' # [useful] add modified files only, new (or not track) files are not added
+alias gadf='git add -f'
+alias grst='git reset'
+alias gci='git commit'
+alias gcim='git commit -m'
+alias gcia='git commit --amend'
+alias gciah='git commit --amend -C HEAD'
+alias gcp='git cherry-pick'
+alias gb='git branch'
+alias gba='git branch -a'
+alias gbd='git branch -d'
+alias gbm='git branch -m'
+alias gsbr='git show-branch'
+alias gremv='git remote -v'
+alias grema='git remote add'        # git remote add [shortname] [url]
+alias gremd='git remote rm'         # git remote rm [shortname]
+alias gremc='git remote rename'     # git remote rename [old-shortname] [new-shortname]
+alias grems='git remote show'       # git remote show [shortname]
+alias gremurl='git remote set-uri'  # git remote set-uri [shortname] [url] e.g.) ssh://github.com/xxx/yyy.git
+alias ginf='git remote show origin'
+alias gmg='git merge'
+alias gmgs='git merge --squash'
+alias greb='git rebase'
+alias greba='git rebase --abort'
+alias grebi='git rebase -i'        # e.g.) git rebase -i HEAD~2
+alias gst='git status | less'
+alias gstuno='git status -uno | less'
+alias gstall='git status  --ignored | less'
+alias gdif='git diff'
+alias gdifn='git diff --name-only'
+alias gdifp='git diff --no-prefix'
+alias gdifc='git diff --cached'
+alias gdifcn='git diff --cached --name-only'
+alias gdifcp='git diff --cached --no-prefix'
+alias gdifh='git diff HEAD'
+alias gdifhn='git diff HEAD --name-only'
+alias gpc='git apply -v --whitespace=nowarn'
+alias gpcd='git apply -v --check'
+glog_defopt="--date=iso --decorate=full"
+alias glog='git log ${glog_defopt}'
+alias glogs='git log --stat ${glog_defopt}'
+alias glogn='git log --name-only ${glog_defopt}'
+alias glogone='git log ${glog_defopt} --oneline'
+#alias glogg='git log --graph ${glog_defopt}'
+alias glogg='git log --graph --date-order -C -M --pretty=format:"<%h> %ad [%an] %Cgreen%d%Creset %s" --all --date=iso'
+alias glogp='git log -p --date=iso'
+alias glogown='git log --date=iso --author=ktani'
+## other usefull log options
+# --grep=xxx       : search word from commit message
+# --all-match=xxx  : search word from author and commit message
+# -(n)             : limit display commit by number (n)
+# --before/--after : limit display commit by date
+#                     <e.g.> --after="2012-1-1" --before="2012-3-30"
+alias gshow='git show'
+## git show usefull pattern
+# gshow [commit hash] / gshow [commit hash] [directory path]
+# gshow :/[regexp pattern]
+alias grlog='git reflog'
+alias gwh='git whatchanged'
+alias gblm='git blame'
+alias gtag='git tag -n'
+alias gfet='git fetch -v'  # git fet origin
+alias gsts='git stash'
+alias gstp='git stash pop'
+alias gstpi='git stash pop --index'
+alias gls='git ls-files | less'
+alias glsu='git ls-files --unmerged | less'
+alias gmv='git mv'
+#alias grm='git rm'          # danger
+alias grmc='git rm --cached' # delete only from repository
+#alias grev='git revert'     # danger
+alias gcl='git clean -df'
+alias ggrep='git grep'
+alias gcnt='git count-objects -v'
+alias ggc='git gc --prune=now'
+alias gfsck='git fsck'
+alias gcfg='git config -l'
+
+## subversion
+alias shelp='svn help'
+alias sco='svn checkout'  # svn checkout [-r revision] [url]
+alias sad='svn add'
+alias sdel='svn delete'
+alias smov='svn move'
+alias smkd='svn mkdir'
+alias sst='svn stat'
+alias sstv='svn stat -v | less'
+alias srev='svn revert -R'   # svn revert -R [directory]
+alias sup='svn update'
+# alias sci='svn commit'  # carefully
+alias sinf='svn info'
+function sdif {
+    svn diff --patch-compatible $1
+}
+function sdifn {
+    svn diff --summarize $1 | lv
+}
+function slog {
+    if [ $# -eq 0 ]; then
+        svn log -r HEAD:0 | less
+    elif [ $# -eq 1 ]; then
+        svn log -r HEAD:0 $1 | less
+    elif [ $# -eq 2 ]; then
+        svn log -r $1 $2 | less
+    else
+        echo "[usage] slog <rev> <path>"
+    fi
+}
+function slogn {
+    if [ $# -eq 0 ]; then
+        svn log -v -r HEAD:0 | less
+    elif [ $# -eq 1 ]; then
+        svn log -v -r HEAD:0 $1 | less
+    elif [ $# -eq 2 ]; then
+        svn log -v -r $1 $2 | less
+    else
+        echo "[usage] slogn <rev> <path>"
+    fi
+}
+function slogp {
+    if [ $# -eq 0 ]; then
+        svn log --diff -r HEAD:0 | less
+    elif [ $# -eq 1 ]; then
+        svn log --diff -r HEAD:0 $1 | less
+    elif [ $# -eq 2 ]; then
+        svn log --diff -r $1 $2 | less
+    else
+        echo "[usage] slogp <rev> <path>"
+    fi
+}
+function slogh {
+    svn log -r HEAD:BASE | less
+}
+function slogone {
+    if [ $# -eq 0 ]; then
+        svn log -r HEAD:0 -q | less
+    elif [ $# -eq 1 ]; then
+        svn log -r HEAD:0 $1 -q | less
+    elif [ $# -eq 2 ]; then
+        svn log -r $1 $2 -q | less
+    else
+        echo "[usage] slogone <rev> <path>"
+    fi
+}
+function sblm {
+    svn blame $1 | lv
+}
+alias sreloc='svn switch --relocate'  # srelec svn://[old addr]/xxx svn://[new addr]/xxx
+
+if [ ${OSTYPE} = "Cygwin" ]; then
+  # export GREP_OPTIONS="-n -I -E --color=always --exclude-dir=.svn --exclude=*.svn-base --exclude-dir=.git"  # --extended-regexp
+  export GREP_OPTIONS="-n -I -P --color=always --exclude-dir=.svn --exclude=*.svn-base --exclude-dir=.git"   # --perl-regexp
+  # export GREP_OPTIONS="-n -I -E --exclude-dir=.svn --exclude=*.svn-base --exclude-dir=.git"
+  alias cs='cygstart'
+  alias lv='TERM=cygwin lv -c'
+  # alias lv='less'
+  alias peco='percol --match-method regex'
+  alias grep='grep'
+  alias g='${ag_defopt}'
+  alias f='${ag_defopt} 2> /dev/null'  # don't alias "fi" because test command (if..fi) is broken
+  alias fic='${ag_defopt} -G \.c[p]*$ 2> /dev/null'
+  alias fih='${ag_defopt} -G \.h[p]*$ 2> /dev/null'
+  alias fich='${ag_defopt} -G \.[ch][p]*$ 2> /dev/null'
+  alias fis='${ag_defopt} -G \.s$\|\.asm$ 2> /dev/null'
+  alias fijs='${ag_defopt} -G \.js$ 2> /dev/null'
+  alias fim='${ag_defopt} -G [Mm]ake\|\.mk$ 2> /dev/null'
+  alias fimi='${ag_defopt} -G [Mm]ake\|\.mk$\|\.inc$ 2> /dev/null'
+  alias ficfg='${ag_defopt} -G \.cfg$\|\.config$ 2> /dev/null'
+  alias mk='unsgr; make; setgr'
+  alias mka='unsgr; make all; setgr'
+  alias mkc='unsgr; make clean; setgr'
+  alias mkdc='unsgr; make distclean; setgr'
+  alias mki='unsgr; make install; setgr'
+  alias mklog='unsgr; make > mk.log 2>&1; setgr'
+else
+  alias g='${pt_defopt}'
+  alias f='${pt_defopt} 2> /dev/null'  # don't alias "fi" because test command (if..fi) is broken
+  alias fic='${pt_defopt} -G \.c[p]*$ 2> /dev/null'
+  alias fih='${pt_defopt} -G \.h[p]*$ 2> /dev/null'
+  alias fich='${pt_defopt} -G \.[ch][p]*$ 2> /dev/null'
+  alias fis='${pt_defopt} -G \.s$\|\.asm$ 2> /dev/null'
+  alias fijs='${pt_defopt} -G \.js$ 2> /dev/null'
+  alias fim='${pt_defopt} -G [Mm]ake\|\.mk$ 2> /dev/null'
+  alias fimi='${pt_defopt} -G [Mm]ake\|\.mk$\|\.inc$ 2> /dev/null'
+  alias ficfg='${pt_defopt} -G \.cfg$\|\.config$ 2> /dev/null'
+  alias mk='make'
+  alias mka='make all'
+  alias mkc='make clean'
+  alias mkdc='make distclean'
+  alias mki='make install'
+  alias mklog='make > mk.log 2>&1'
+fi
+
